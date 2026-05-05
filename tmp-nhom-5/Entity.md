@@ -10,7 +10,7 @@
   - `citizenIdBackPath`: Đường dẫn ảnh CCCD mặt sau
   - `deferredUntil`: Khóa hiến máu đến ngày... (Nếu bị khóa vĩnh viễn thì sẽ chọn ngày 01/01/3000).
   - `failedLoginAttempts` (Mặc định: 0): Đếm số lần đăng nhập sai liên tiếp. Nếu đăng nhập đúng, reset về 0. Nếu sai, cộng thêm 1.
-  - `lastFailedLoginTime`: Lưu thời điểm của lần đăng nhập sai gần nhất. Khi đăng nhập nếu số lần thời điểm sai gần nhất đến thời điểm hiện tại quá 30 phút thì reset `failedLoginAttempts` về 0.
+  - `lastFailedLoginTime`: Lưu thời điểm của lần đăng nhập sai gần nhất. Khi đăng nhập (bất kể mật khẩu sai hay đúng) nếu số lần thời điểm sai gần nhất đến thời điểm hiện tại quá 30 phút thì reset `failedLoginAttempts` về 0.
   - `lockedUntil` (Mặc định: null): Lưu thời điểm tài khoản được mở khóa. Khi `failedLoginAttempts` đạt mốc 5, hệ thống sẽ lấy thời gian hiện tại cộng thêm 30 phút và gán vào thuộc tính này.
 
 - **RevokedToken (Danh sách đen - Blacklist, Lưu trữ các Access Token đã bị vô hiệu hóa trước thời hạn):**
