@@ -362,3 +362,123 @@ Lớp Thực thể (Entity) lưu trữ thông tin sống thọ (long-lived hay c
     *   **Tên Method:** Sử dụng **camelCase**, tuân thủ cú pháp query creation của Spring Data JPA (*Ví dụ:* `findByPostId()`).
 *   **Thiết kế:** Trở thành `CommentRepository` (thường kế thừa `JpaRepository`). Nó cung cấp các hàm lưu, xóa, sửa và tìm kiếm mà không cần viết câu lệnh SQL thủ công.
 
+---
+
+### VÍ DỤ CỤ THỂ: THIẾT KẾ CHỨC NĂNG "THÊM BÌNH LUẬN" (Tham khảo nếu cần thôi nhé, chưa duyệt đoạn code này đâu)
+
+**Ngữ cảnh ở pha Phân tích (Analysis):**
+Ta có Boundary `CommentUI`, Control `CommentManager`, Entity `Comment`.
+
+**Chuyển sang pha Thiết kế (Design Class Diagram - DCD):**
+
+**1. Tại khu vực Boundary (Biên)**
+*ReactJS Code (Giao diện Client):*
+```javascript
+// Tên component: PascalCase
+function CommentForm({ postId }) {
+  // Tên state: camelCase
+  const [content, setContent] = useState("");
+
+  // Tên hàm sự kiện: camelCase có tiền tố handle/submit
+  const submitComment = async () => {
+    // Gọi endpoint: kebab-case, danh từ số nhiều
+    await axios.post('/api/comments', { postId: postId, content: content });
+  };
+  return <textarea onChange={e => setContent(e.target.value)} />;
+}
+```
+
+*Spring Boot DTO (Cấu trúc dữ liệu vận chuyển):*
+```java
+// Tên class: PascalCase + Hậu tố DTO/Request
+public class CommentRequestDTO {
+    // Tên thuộc tính: camelCase
+    private Long postId;
+    private String content;
+    // Getters & Setters
+}
+```
+
+*Spring Boot Controller (Cửa ngõ Backend):*
+```java
+@RestController
+@RequestMapping("/api/comments") // Endpoint: kebab-case, số nhiều
+// Tên class: PascalCase + Hậu tố Controller
+public class CommentController {
+    private final CommentService commentService;
+
+    @PostMapping
+    // Tên method: camelCase + Động từ
+    public ResponseEntity<String> addComment(@RequestBody CommentRequestDTO dto) {
+        commentService.createComment(dto);
+        return ResponseEntity.ok("Success");
+    }
+}
+```
+
+**2. Tại khu vực Control (Điều khiển)**
+*Spring Boot Service:*
+```java
+@Service
+// Tên class: PascalCase + Hậu tố Service
+public class CommentService {
+    private final CommentRepository commentRepository; 
+    private final PostRepository postRepository;       
+
+    @Transactional
+    // Tên method: camelCase + Động từ mang ý nghĩa nghiệp vụ
+    public void createComment(CommentRequestDTO dto) {
+        BlogPost post = postRepository.findById(dto.getPostId()).orElseThrow();
+        
+        if (!post.isCommentAllowed()) {
+            throw new RuntimeException("Bài viết này đã khóa bình luận.");
+        }
+
+        Comment newComment = new Comment();
+        newComment.initializeComment(dto.getContent(), post);
+
+        commentRepository.save(newComment);
+    }
+}
+```
+
+**3. Tại khu vực Entity (Thực thể)**
+*Spring Boot Entity (Đóng gói và che giấu thông tin):*
+```java
+@Entity
+// Tên class: PascalCase + Danh từ số ít
+public class Comment {
+    @Id @GeneratedValue
+    private Long id;
+
+    @Column(nullable = false)
+    // Tên biến: camelCase, bộc lộ rõ ý định
+    private String content;
+
+    private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private BlogPost post;
+
+    // Tên method: camelCase + Động từ (thay đổi trạng thái)
+    public void initializeComment(String content, BlogPost post) {
+        if(content == null || content.trim().isEmpty()) {
+            throw new IllegalArgumentException("Nội dung không được rỗng");
+        }
+        this.content = content;
+        this.post = post;
+        this.createdAt = LocalDateTime.now(); 
+    }
+}
+```
+
+*Spring Boot Repository:*
+```java
+@Repository
+// Tên Interface: PascalCase + Hậu tố Repository
+public interface CommentRepository extends JpaRepository<Comment, Long> {
+    // Tên method: camelCase theo chuẩn JPA
+    List<Comment> findByPostId(Long postId);
+}
+```
