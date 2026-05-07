@@ -364,6 +364,69 @@ Lớp Thực thể (Entity) lưu trữ thông tin sống thọ (long-lived hay c
 
 ---
 
+## D. Những điều/kiến thức cần lưu ý khi vẽ
+
+### I. Quan hệ: Dependency
+Trong sơ đồ UML, quan hệ phụ thuộc được vẽ bằng **một đường nét đứt có mũi tên (`- - ->`)** trỏ từ lớp Nguồn (Source) sang lớp Đích (Target). Khi lớp Target thay đổi, lớp Source có thể bị ảnh hưởng. Tuy nhiên, chỉ một đường nét đứt thì quá chung chung. Vì vậy, người ta dùng các keyword này (đặt trong cặp dấu guillemets `« »`) để **mô tả chính xác bản chất của sự phụ thuộc đó là gì**.
+
+#### Nhóm 1: Các keyword cực kỳ phổ biến khi thiết kế Code (DCD)
+
+Đây là những từ khóa bạn sẽ dùng rất nhiều khi thiết kế Design Class Diagram cho Spring Boot:
+
+**1. `«use»` (Sử dụng)**
+*   **Ý nghĩa:** Lớp Source cần lớp Target để triển khai, thường là sử dụng Target làm tham số (parameter) truyền vào hàm hoặc kiểu dữ liệu trả về.
+*   **Ví dụ Spring Boot:** Lớp `CommentController` có hàm `addComment(CommentRequestDTO dto)`. Khi đó `CommentController` `- - «use» - ->` `CommentRequestDTO`. Nó không tạo ra DTO, nó chỉ "sử dụng" DTO do Spring truyền vào.
+
+**2. `«call»` (Gọi hàm)**
+*   **Ý nghĩa:** Lớp Source có gọi một hoặc nhiều phương thức (hàm) của lớp Target.
+*   **Ví dụ Spring Boot:** `CommentController` gọi hàm `createComment()` của `CommentService`. Vậy nên `CommentController` `- - «call» - ->` `CommentService`.
+
+**3. `«create»` (Khởi tạo)**
+*   **Ý nghĩa:** Lớp Source có nhiệm vụ tạo ra đối tượng (instance) mới của lớp Target (bằng từ khóa `new`).
+*   **Ví dụ Spring Boot:** Trong `CommentService`, em gõ `Comment c = new Comment()`. Lúc này `CommentService` `- - «create» - ->` `Comment` (Entity).
+
+**4. `«realize»` (Thực thi / Hiện thực hóa)**
+*   **Ý nghĩa:** Lớp Source là bản cài đặt (implementation) chi tiết của một thiết kế hoặc một giao diện (Interface) mà Target định nghĩa. Trong Java, nó chính là từ khóa `implements`.
+*   **Ví dụ Spring Boot:** Em định nghĩa interface `CommentRepository` (kế thừa `JpaRepository`). Lớp cài đặt thực tế dưới nền của Spring Data JPA sẽ `- - «realize» - ->` cái interface này.
+
+#### Nhóm 2: Các keyword dùng để chuyển đổi giữa các pha (Analysis -> Design)
+
+**5. `«refine»` (Làm mịn / Tinh chỉnh)**
+*   **Ý nghĩa:** Thể hiện sự chuyển đổi giữa các mức độ ngữ nghĩa (semantic levels). Lớp Source là phiên bản chi tiết hơn, "đậm chất công nghệ" hơn của lớp Target.
+*   **Ví dụ:** Em có lớp `CommentUI` ở Analysis Class Diagram (Target). Sau đó em thiết kế ra một file `CommentForm.jsx` (Source) trong ReactJS. Khi đó `CommentForm.jsx` `- - «refine» - ->` `CommentUI`.
+
+**6. `«trace»` (Truy vết)**
+*   **Ý nghĩa:** Dùng để theo dõi (track) sự thay đổi giữa các mô hình khác nhau. Chẳng hạn kết nối một Class với một Yêu cầu (Requirement) trong tài liệu ban đầu. Không ảnh hưởng đến code.
+*   **Ví dụ:** Class `CommentService` `- - «trace» - ->` Document `Tính năng bình luận #REQ-002` để biết tại sao lại sinh ra class này.
+
+#### Nhóm 3: Các keyword đặc thù / Học thuật (Ít dùng trong Spring Boot)
+
+**7. `«derive»` (Dẫn xuất / Suy diễn)**
+*   **Ý nghĩa:** Lớp Source được tính toán hoặc suy ra từ lớp Target, bản thân nó không cần lưu trữ độc lập.
+*   **Ví dụ:** Em có class `DoanhThuTheoThang`. Class này không tự sinh ra mà nó `- - «derive» - ->` từ dữ liệu của class `Order` (Đơn hàng).
+
+**8. `«substitute»` (Thay thế)**
+*   **Ý nghĩa:** Lớp Source có thể được dùng để thay thế hoàn toàn cho lớp Target trong mọi trường hợp mà hệ thống không bị lỗi (Tuân thủ nguyên tắc Liskov Substitution trong SOLID).
+*   **Ví dụ:** Nếu em có lớp `AdminUser` kế thừa `SystemUser`. `AdminUser` có thể `- - «substitute» - ->` `SystemUser`. Bất cứ hàm nào cần `SystemUser`, em truyền `AdminUser` vào đều chạy tốt.
+
+**9. `«permit»` (Cho phép truy cập - Phá vỡ đóng gói)**
+*   **Ý nghĩa:** Lớp Target "đặc cách" cho lớp Source được phép truy cập vào các thuộc tính/hàm `private` của nó.
+*   **Ví dụ:** Trong C++ có từ khóa `friend` class. Trong Java/Spring Boot chúng ta hiếm khi làm điều này (chỉ có mức `package-private`) nên keyword này ít được sử dụng trong DCD của Java.
+
+**10. `«instantiate»` (Tạo bản thể / Cấp phát)**
+*   **Ý nghĩa:** Chuyên dùng trong kiến trúc Meta-modeling. Source là một instance của Target (nhưng Target ở đây là một Metaclass). Nó mang tính nền tảng ngôn ngữ hơn là thiết kế app thông thường.
+*   **Ví dụ:** Trong Java, mọi class em viết ra thực chất đều là một "instance" của lớp `java.lang.Class`.
+
+### II. Enum để riêng, không nối
+
+---
+
+## E. Question
+1. Những hàm xác minh (verify) nên trả về boolean hay void (throw lỗi)
+    Trả lời: [Docx](https://docs.google.com/document/d/1HT0hFHtqIPM4JfRto8Ns0PLWoJSgUyHwjvgAtY93CNk/edit?usp=sharing "https://docs.google.com/document/d/1HT0hFHtqIPM4JfRto8Ns0PLWoJSgUyHwjvgAtY93CNk/edit?usp=sharing")
+
+---
+
 ### VÍ DỤ CỤ THỂ: THIẾT KẾ CHỨC NĂNG "THÊM BÌNH LUẬN" (Tham khảo nếu cần thôi nhé, chưa duyệt đoạn code này đâu)
 
 **Ngữ cảnh ở pha Phân tích (Analysis):**
